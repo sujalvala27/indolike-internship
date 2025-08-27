@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Clone</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="logo">▶ YouTube</div>
+    <div class="search-bar">
+      <input type="text" placeholder="Search">
+      <button>🔍</button>
+    </div>
+    <div class="user-icons">
+      <span>📷</span>
+      <span>🔔</span>
+      <span>👤</span>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <ul>
+      <li>🏠 Home</li>
+      <li>🔥 Explore</li>
+      <li>📺 Subscriptions</li>
+      <li>📚 Library</li>
+      <li>🕑 History</li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="video-grid">
+    <div class="video-card">
+      <img src="https://via.placeholder.com/300x180" alt="thumbnail">
+      <h3>Sample Video Title</h3>
+      <p>Channel Name • 1M views • 1 day ago</p>
+    </div>
+    <div class="video-card">
+      <img src="https://via.placeholder.com/300x180" alt="thumbnail">
+      <h3>Another Video</h3>
+      <p>Channel XYZ • 500k views • 3 days ago</p>
+    </div>
+    <!-- Add more cards -->
+  </main>
+  <script>
+    const videos = [
+  { title: "Intro to JS", channel: "Code Hub", views: "200k", time: "2 days ago", thumbnail: "https://via.placeholder.com/300x180" },
+  { title: "React Tutorial", channel: "Tech Guru", views: "1M", time: "1 week ago", thumbnail: "https://via.placeholder.com/300x180" }
+];
+
+const container = document.querySelector(".video-grid");
+
+videos.forEach(video => {
+  const card = document.createElement("div");
+  card.classList.add("video-card");
+  card.innerHTML = `
+    <img src="${video.thumbnail}" alt="thumbnail">
+    <h3>${video.title}</h3>
+    <p>${video.channel} • ${video.views} views • ${video.time}</p>
+  `;
+  container.appendChild(card);
+});
+
+  </script>
+</body>
+</html>

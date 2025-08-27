@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ShopClone – Amazon-style Homepage (HTML/CSS/JS)</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --ink:#111;
+      --muted:#555;
+      --brand:#ff9900; /* Amazon-ish accent */
+      --brand-ink:#111;
+      --chip:#232f3e;  /* dark navy */
+      --chip-ink:#fff;
+      --soft:#f3f3f3;
+      --card:#fff;
+      --shadow: 0 2px 8px rgba(0,0,0,.08);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--soft);color:var(--ink);font:14px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji"}
+    a{text-decoration:none;color:inherit}
+    img{max-width:100%;display:block}
+    button{cursor:pointer}
+
+    /* Header */
+    .header{position:sticky;top:0;z-index:50;background:#131921;color:#fff}
+    .header-top{display:grid;grid-template-columns:160px 170px 1fr 220px 120px;gap:8px;align-items:center;padding:8px 12px}
+    .logo{display:flex;align-items:center;gap:6px;font-weight:800;letter-spacing:.3px}
+    .logo svg{width:28px;height:28px}
+    .deliver{display:flex;gap:6px;align-items:center;padding:8px;border-radius:8px}
+    .deliver:hover{outline:1px solid #ffffff33}
+    .deliver small{display:block;color:#ddd}
+    .search{display:flex;align-items:center}
+    .search .category{background:#eee;border:none;padding:10px 8px;border-radius:8px 0 0 8px;color:#111}
+    .search input{flex:1;padding:10px;border:none}
+    .search button{border:none;background:var(--brand);color:var(--brand-ink);padding:10px 14px;border-radius:0 8px 8px 0;font-weight:700}
+    .search-wrap{position:relative}
+    .suggestions{position:absolute;left:0;right:0;top:100%;background:#fff;color:#111;border-radius:8px;box-shadow:var(--shadow);overflow:hidden;display:none;max-height:300px;overflow-y:auto}
+    .suggestions.show{display:block}
+    .suggestions div{padding:10px 12px;border-top:1px solid #eee}
+    .suggestions div:hover{background:#f7f7f7}
+
+    .lang{display:flex;align-items:center;gap:6px;justify-content:center}
+    .account{position:relative}
+    .account .btn{display:flex;gap:6px;align-items:center;justify-content:center;border-radius:8px;padding:8px 10px}
+    .account:hover .dropdown{display:block}
+    .dropdown{position:absolute;right:0;top:calc(100% + 6px);width:260px;background:#fff;color:#111;border-radius:12px;box-shadow:var(--shadow);display:none}
+    .dropdown .row{padding:12px;border-bottom:1px solid #eee}
+    .dropdown .row:last-child{border-bottom:none}
+    .dropdown h4{margin:0 0 6px 0}
+    .orders{display:flex;gap:12px;align-items:center;justify-content:center}
+    .cart{position:relative;display:flex;align-items:center;justify-content:center}
+    .cart .count{position:absolute;top:-6px;right:18px;background:var(--brand);color:#111;border-radius:50%;width:20px;height:20px;display:grid;place-items:center;font-weight:800}
+
+    .header-nav{background:#232f3e;color:#fff;display:flex;gap:12px;align-items:center;padding:8px 12px;overflow:auto}
+    .chip{background:transparent;border:1px solid #ffffff22;color:#fff;padding:8px 10px;border-radius:24px;white-space:nowrap}
+    .chip:hover{background:#ffffff10}
+
+    /* Layout */
+    .container{max-width:1400px;margin:0 auto;padding:12px}
+
+    /* Hero carousel */
+    .hero{position:relative;border-radius:16px;overflow:hidden}
+    .hero-track{display:flex;transition:transform .6s ease}
+    .hero-slide{min-width:100%;height:320px;background:#ddd;position:relative}
+    .hero-slide img{width:100%;height:100%;object-fit:cover}
+    .hero .prev,.hero .next{position:absolute;top:50%;transform:translateY(-50%);background:#0008;color:#fff;border:none;width:40px;height:40px;border-radius:50%}
+    .hero .prev{left:12px}.hero .next{right:12px}
+    .dots{position:absolute;bottom:10px;left:0;right:0;display:flex;gap:8px;justify-content:center}
+    .dots button{width:10px;height:10px;border-radius:50%;border:none;background:#fff6;}
+    .dots button.active{background:#fff}
+
+    /* Cards grid */
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px}
+    .card{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:14px;display:flex;flex-direction:column;gap:10px}
+    .card h3{margin:0;font-size:16px}
+    .card .thumbs{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    .card .thumb{background:#f8f8f8;border-radius:10px;padding:8px;display:flex;align-items:center;justify-content:center}
+
+    /* Horizontal product carousel */
+    .section{margin-top:18px;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:12px}
+    .section h2{margin:4px 6px 12px 6px;font-size:18px}
+    .rail{display:flex;gap:12px;overflow:auto;scroll-snap-type:x mandatory;padding-bottom:6px}
+    .product{min-width:190px;scroll-snap-align:start;border:1px solid #eee;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px}
+    .product img{height:150px;object-fit:cover;border-radius:10px}
+    .price{font-weight:800}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .btn-primary{background:var(--brand);border:none;color:#111;padding:8px 10px;border-radius:12px;font-weight:700}
+    .btn-light{background:#f2f2f2;border:none;padding:8px 10px;border-radius:12px}
+    .wishlist{background:#fff;border:1px solid #ddd;border-radius:12px;padding:8px 10px}
+
+    /* Cart drawer */
+    .drawer{position:fixed;inset:0;display:none}
+    .drawer.show{display:block}
+    .drawer .backdrop{position:absolute;inset:0;background:#0008}
+    .drawer .panel{position:absolute;right:0;top:0;bottom:0;width:380px;max-width:100%;background:#fff;border-left:1px solid #eee;display:flex;flex-direction:column}
+    .panel header{padding:12px 14px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
+    .panel .items{flex:1;overflow:auto;padding:12px}
+    .panel footer{border-top:1px solid #eee;padding:12px;display:flex;flex-direction:column;gap:10px}
+    .cart-item{display:grid;grid-template-columns:64px 1fr auto;gap:10px;border-bottom:1px solid #f1f1f1;padding:10px 0}
+    .qty{display:flex;align-items:center;gap:6px}
+    .qty button{width:28px;height:28px;border-radius:6px;border:1px solid #ddd;background:#fff}
+
+    /* Footer */
+    .backtop{background:#354558;color:#fff;text-align:center;padding:12px;cursor:pointer;margin-top:18px;border-radius:12px}
+    .footer{background:#232f3e;color:#fff;margin-top:12px}
+    .footer .cols{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:24px}
+    .footer h4{margin:0 0 8px 0}
+    .footer a{display:block;color:#ddd;margin:6px 0}
+    .footer .copy{border-top:1px solid #ffffff22;padding:14px;text-align:center;color:#ccc}
+
+    /* Modals */
+    .modal{position:fixed;inset:0;display:none;place-items:center}
+    .modal.show{display:grid}
+    .modal .sheet{background:#fff;border-radius:16px;box-shadow:var(--shadow);width:min(520px,92%);padding:16px}
+    .modal .sheet header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+
+    /* Utility */
+    .hide{display:none !important}
+
+    /* Responsive */
+    @media (max-width:1024px){
+      .header-top{grid-template-columns:120px 1fr 44px 44px 60px}
+      .deliver{display:none}
+      .lang{display:none}
+      .orders{display:none}
+      .search .category{display:none}
+    }
+    @media (max-width:800px){
+      .grid{grid-template-columns:repeat(2,1fr)}
+    }
+    @media (max-width:520px){
+      .grid{grid-template-columns:1fr}
+      .footer .cols{grid-template-columns:repeat(2,1fr)}
+    }
+  </style>
+</head>
+<body>
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <a class="logo" href="#" aria-label="ShopClone Home" title="ShopClone">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.09 6.26H20l-5.17 3.76L16.18 18 12 14.91 7.82 18l1.35-5.98L4 8.26h5.91L12 2z"/></svg>
+        <span>ShopClone</span>
+      </a>
+
+      <button id="btnDeliver" class="deliver" title="Choose delivery location">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg>
+        <div>
+          <small id="addrLine1">Deliver to</small>
+          <div id="addrLine2" style="font-weight:700">Update location</div>
+        </div>
+      </button>
+
+      <div class="search-wrap">
+        <div class="search">
+          <select class="category" id="catSelect" aria-label="Search category">
+            <option value="all">All</option>
+            <option value="electronics">Electronics</option>
+            <option value="fashion">Fashion</option>
+            <option value="books">Books</option>
+            <option value="home">Home</option>
+            <option value="toys">Toys</option>
+          </select>
+          <input id="searchInput" aria-label="Search" placeholder="Search ShopClone" />
+          <button id="searchBtn" aria-label="Search">🔍</button>
+        </div>
+        <div id="suggestions" class="suggestions" role="listbox" aria-label="Suggestions"></div>
+      </div>
+
+      <div class="lang">
+        <label for="langSel" class="sr-only">Language</label>
+        <select id="langSel" title="Language">
+          <option value="en">EN</option>
+          <option value="hi">हिन्दी</option>
+        </select>
+      </div>
+
+      <div class="account">
+        <button class="btn" id="btnAccount" aria-haspopup="true" aria-expanded="false">👤 <span id="helloUser">Hello, sign in</span></button>
+        <div class="dropdown" role="menu">
+          <div class="row">
+            <button class="btn-primary" id="openSignIn">Sign in / Create account</button>
+          </div>
+          <div class="row">
+            <h4>Quick Links</h4>
+            <a href="#">Your Orders</a>
+            <a href="#" id="openWishlist">Your Wishlist</a>
+            <a href="#" id="openAddress">Manage Addresses</a>
+          </div>
+        </div>
+      </div>
+
+      <button class="cart" id="openCart" aria-label="Cart">
+        🛒<span class="count" id="cartCount">0</span>
+      </button>
+    </div>
+
+    <nav class="header-nav" aria-label="Primary">
+      <button class="chip">All</button>
+      <button class="chip">Best Sellers</button>
+      <button class="chip">Mobiles</button>
+      <button class="chip">Fashion</button>
+      <button class="chip">Electronics</button>
+      <button class="chip">Home & Kitchen</button>
+      <button class="chip">Books</button>
+      <button class="chip">New Releases</button>
+      <button class="chip">Today's Deals</button>
+    </nav>
+  </div>
+
+  <div class="container">
+    <!-- HERO -->
+    <section class="hero" aria-label="Promotions">
+      <div class="hero-track" id="heroTrack">
+        <div class="hero-slide"><img src="https://images.unsplash.com/photo-1511385348-a52b4a160dc2?q=80&w=1600&auto=format&fit=crop" alt="Electronics Sale"></div>
+        <div class="hero-slide"><img src="https://images.unsplash.com/photo-1542299162-65e532388b22?q=80&w=1600&auto=format&fit=crop" alt="Sneakers"></div>
+        <div class="hero-slide"><img src="https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&w=1600&auto=format&fit=crop" alt="Fashion"></div>
+      </div>
+      <button class="prev" id="heroPrev" aria-label="Prev">‹</button>
+      <button class="next" id="heroNext" aria-label="Next">›</button>
+      <div class="dots" id="heroDots" aria-label="Slide indicators"></div>
+    </section>
+
+    <!-- QUICK CARDS -->
+    <div class="grid">
+      <div class="card">
+        <h3>Up to 60% off | Electronics</h3>
+        <div class="thumbs">
+          <div class="thumb"><img alt="Headphones" src="https://images.unsplash.com/photo-1518442076682-681c3f937f21?q=80&w=400&auto=format&fit=crop"></div>
+          <div class="thumb"><img alt="Laptops" src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=400&auto=format&fit=crop"></div>
+          <div class="thumb"><img alt="Cameras" src="https://images.unsplash.com/photo-1519183071298-a2962be96f83?q=80&w=400&auto=format&fit=crop"></div>
+          <div class="thumb"><img alt="Consoles" src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=400&auto=format&fit=crop"></div>
+        </div>
+        <a href="#" class="btn-light" style="margin-top:auto">See more</a>
+      </div>
+      <div class="card">
+        <h3>Upgrade your home</h3>
+        <div class="thumbs">
+          <div class="thumb"><img alt="Vacuum" src="https://images.unsplash.com/photo-1600493032459-9147cd1b0552?q=80&w=400&auto=format&fit=crop"></div>
+          <div class="thumb"><img alt="Mixer" src="https://images.unsplash.com/photo-1616594039964-c2a0b1dd6ec0?q=80&w=400&auto=format&fit=crop"></div>
+          <div class="thumb"><img alt="Lamp" src="https://images.unsplash.com/photo-1524758631624-e2822e304c36?q=80&w=400&auto=format&fit=crop"></div>
+          <div class="thumb"><img alt="Airfryer" src="https://images.unsplash.com/photo-1565299585323-38d6b0865b47?q=80&w=400&auto=format&fit=crop"></div>
+        </div>
+        <a href="#" class="btn-light" style="margin-top:auto">Shop now</a>
+      </div>
+      <div class="card">
+        <h3>Top picks in fashion</h3>
+        <div class="thumbs">
+          <div class="thumb"><img alt="Jackets" src="https://images.unsplash.com/photo-1520975916090-3105956dac38?q=80&w=400&auto=format&fit=crop"></div>
+          <div class="thumb"><img alt="Watches" src="https://images.unsplash.com/photo-1524805444758-089113d48a6d?q=80&w=400&auto=format&fit=crop"></div>
+          <div class="thumb"><img alt="Shoes" src="https://images.unsplash.com/photo-1520975693416-35a4bd1a5a3d?q=80&w=400&auto=format&fit=crop"></div>
+          <div class="thumb"><img alt="Bags" src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=400&auto=format&fit=crop"></div>
+        </div>
+        <a href="#" class="btn-light" style="margin-top:auto">Explore</a>
+      </div>
+      <div class="card">
+        <h3>Sign in for your best experience</h3>
+        <button id="ctaSignIn" class="btn-primary">Sign in securely</button>
+        <img alt="Delivery" src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=1200&auto=format&fit=crop" style="border-radius:12px;margin-top:10px;aspect-ratio:16/9;object-fit:cover">
+      </div>
+    </div>
+
+    <!-- PRODUCTS: DEALS -->
+    <section class="section">
+      <h2>Deals of the Day</h2>
+      <div class="rail" id="rail-deals"></div>
+    </section>
+
+    <!-- PRODUCTS: TRENDING -->
+    <section class="section">
+      <h2>Trending in Electronics</h2>
+      <div class="rail" id="rail-electronics"></div>
+    </section>
+
+    <div class="backtop" id="backTop">Back to top ↑</div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="cols">
+      <div>
+        <h4>Get to Know Us</h4>
+        <a href="#">About ShopClone</a>
+        <a href="#">Careers</a>
+        <a href="#">Press Releases</a>
+      </div>
+      <div>
+        <h4>Connect with Us</h4>
+        <a href="#">Facebook</a>
+        <a href="#">Twitter</a>
+        <a href="#">Instagram</a>
+      </div>
+      <div>
+        <h4>Make Money with Us</h4>
+        <a href="#">Sell on ShopClone</a>
+        <a href="#">Advertise</a>
+        <a href="#">Affiliate Program</a>
+      </div>
+      <div>
+        <h4>Let Us Help You</h4>
+        <a href="#">Your Account</a>
+        <a href="#">Returns Centre</a>
+        <a href="#">Help</a>
+      </div>
+    </div>
+    <div class="copy">© <span id="year"></span> ShopClone • Educational Amazon-style UI clone</div>
+  </footer>
+
+  <!-- MODALS -->
+  <div class="modal" id="modalAddress" aria-modal="true" role="dialog">
+    <div class="sheet">
+      <header><h3>Choose your location</h3> <button id="closeAddress">✕</button></header>
+      <label>Enter PIN code</label>
+      <div class="row" style="margin:8px 0">
+        <input id="pincode" placeholder="e.g. 380001" style="flex:1;padding:10px;border:1px solid #ddd;border-radius:8px">
+        <button id="applyPincode" class="btn-primary">Apply</button>
+      </div>
+      <small>Deliveries and availability may vary by location (demo only).</small>
+    </div>
+  </div>
+
+  <div class="modal" id="modalSignIn" aria-modal="true" role="dialog">
+    <div class="sheet">
+      <header><h3>Sign in to ShopClone</h3> <button id="closeSignIn">✕</button></header>
+      <label for="yourName">Your name</label>
+      <input id="yourName" placeholder="John" style="padding:10px;border:1px solid #ddd;border-radius:8px;width:100%;margin:8px 0 12px">
+      <button id="saveUser" class="btn-primary" style="width:100%">Continue</button>
+      <small>Demo-only: this saves to your browser, no server.</small>
+    </div>
+  </div>
+
+  <!-- CART DRAWER -->
+  <div class="drawer" id="cartDrawer" aria-modal="true" role="dialog">
+    <div class="backdrop" id="closeCart"></div>
+    <aside class="panel">
+      <header>
+        <strong>Your Cart</strong>
+        <button id="closeCartBtn">✕</button>
+      </header>
+      <div class="items" id="cartItems"></div>
+      <footer>
+        <div class="row"><div>Subtotal</div><div><strong id="cartSubtotal">₹0.00</strong></div></div>
+        <button class="btn-primary" id="checkoutBtn">Proceed to Buy</button>
+      </footer>
+    </aside>
+  </div>
+
+  <script>
+    // ===== Utilities =====
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    const money = (n) => `₹${n.toFixed(2)}`;
+
+    // ===== Data (sample products) =====
+    const PRODUCTS = [
+      {id:'p1', title:'Wireless Headphones', cat:'electronics', price:1599, img:'https://images.unsplash.com/photo-1518442076682-681c3f937f21?q=80&w=600&auto=format&fit=crop', deal:true},
+      {id:'p2', title:'Smartwatch Series 5', cat:'electronics', price:3499, img:'https://images.unsplash.com/photo-1516570161787-2fd917215a3d?q=80&w=600&auto=format&fit=crop', deal:true},
+      {id:'p3', title:'Gaming Mouse RGB', cat:'electronics', price:799, img:'https://images.unsplash.com/photo-1527814050087-3793815479db?q=80&w=600&auto=format&fit=crop', deal:true},
+      {id:'p4', title:'Bluetooth Speaker', cat:'electronics', price:1299, img:'https://images.unsplash.com/photo-1507878866276-a947ef722fee?q=80&w=600&auto=format&fit=crop'},
+      {id:'p5', title:'Mirrorless Camera', cat:'electronics', price:24999, img:'https://images.unsplash.com/photo-1519183071298-a2962be96f83?q=80&w=600&auto=format&fit=crop'},
+      {id:'p6', title:'Denim Jacket', cat:'fashion', price:1199, img:'https://images.unsplash.com/photo-1520975916090-3105956dac38?q=80&w=600&auto=format&fit=crop'},
+      {id:'p7', title:'Sneakers Low', cat:'fashion', price:1399, img:'https://images.unsplash.com/photo-1542299162-65e532388b22?q=80&w=600&auto=format&fit=crop'},
+      {id:'p8', title:'Cookware Set', cat:'home', price:1899, img:'https://images.unsplash.com/photo-1616594039964-c2a0b1dd6ec0?q=80&w=600&auto=format&fit=crop'},
+      {id:'p9', title:'Air Fryer XL', cat:'home', price:4299, img:'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?q=80&w=600&auto=format&fit=crop'},
+      {id:'p10', title:'Kids Building Blocks', cat:'toys', price:699, img:'https://images.unsplash.com/photo-1586201375754-1421e0aa2fda?q=80&w=600&auto=format&fit=crop', deal:true},
+      {id:'p11', title:'Novel: The Wanderer', cat:'books', price:299, img:'https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=600&auto=format&fit=crop'},
+      {id:'p12', title:'Laptop 14" i5', cat:'electronics', price:45999, img:'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=600&auto=format&fit=crop'}
+    ];
+
+    // ===== Local Storage State =====
+    const store = {
+      get cart(){ return JSON.parse(localStorage.getItem('sc_cart')||'[]'); },
+      set cart(v){ localStorage.setItem('sc_cart', JSON.stringify(v)); },
+      get wish(){ return JSON.parse(localStorage.getItem('sc_wish')||'[]'); },
+      set wish(v){ localStorage.setItem('sc_wish', JSON.stringify(v)); },
+      get user(){ return localStorage.getItem('sc_user')||''; },
+      set user(v){ localStorage.setItem('sc_user', v); },
+      get addr(){ return localStorage.getItem('sc_addr')||''; },
+      set addr(v){ localStorage.setItem('sc_addr', v); },
+    };
+
+    // ===== Header init =====
+    const yearEl = $('#year');
+    yearEl.textContent = new Date().getFullYear();
+    const helloUser = $('#helloUser');
+    const applyUser = () => helloUser.textContent = store.user ? `Hello, ${store.user}` : 'Hello, sign in';
+    applyUser();
+
+    // ===== Address Modal =====
+    const modalAddress = $('#modalAddress');
+    const openAddress = () => modalAddress.classList.add('show');
+    const closeAddress = () => modalAddress.classList.remove('show');
+    $('#btnDeliver').addEventListener('click', openAddress);
+    $('#openAddress').addEventListener('click', (e)=>{e.preventDefault(); openAddress();});
+    $('#closeAddress').addEventListener('click', closeAddress);
+    $('#applyPincode').addEventListener('click', ()=>{
+      const pin = $('#pincode').value.trim();
+      if(!/^\d{6}$/.test(pin)) { alert('Please enter a valid 6-digit PIN code'); return; }
+      store.addr = pin;
+      $('#addrLine2').textContent = `Deliver to ${pin}`;
+      closeAddress();
+    });
+    if(store.addr) $('#addrLine2').textContent = `Deliver to ${store.addr}`;
+
+    // ===== Sign In Modal =====
+    const modalSignIn = $('#modalSignIn');
+    const openSignIn = ()=> modalSignIn.classList.add('show');
+    const closeSignIn = ()=> modalSignIn.classList.remove('show');
+    $('#openSignIn').addEventListener('click', openSignIn);
+    $('#ctaSignIn').addEventListener('click', openSignIn);
+    $('#closeSignIn').addEventListener('click', closeSignIn);
+    $('#saveUser').addEventListener('click', ()=>{
+      const name = $('#yourName').value.trim();
+      if(!name) return alert('Enter your name');
+      store.user = name; applyUser(); closeSignIn();
+    });
+
+    // ===== Language (basic demo) =====
+    const langSel = $('#langSel');
+    langSel.value = localStorage.getItem('sc_lang')||'en';
+    const applyLang = ()=>{
+      const l = langSel.value; localStorage.setItem('sc_lang', l);
+      $('#backTop').textContent = l==='hi'? 'ऊपर जाएँ ↑':'Back to top ↑';
+      $('#addrLine1').textContent = l==='hi'? 'डिलिवरी करें':'Deliver to';
+    };
+    langSel.addEventListener('change', applyLang); applyLang();
+
+    // ===== Hero carousel =====
+    const heroTrack = $('#heroTrack');
+    const slides = $$('.hero-slide', heroTrack);
+    const dots = $('#heroDots');
+    let index = 0; let timer;
+    const renderDots = ()=>{
+      dots.innerHTML = slides.map((_,i)=>`<button data-i="${i}" aria-label="Go to slide ${i+1}"></button>`).join('');
+      updateHero();
+      dots.addEventListener('click', (e)=>{
+        const b = e.target.closest('button'); if(!b) return; index = +b.dataset.i; updateHero(true);
+      });
+    };
+    const updateHero = (manual=false)=>{
+      heroTrack.style.transform = `translateX(${-index*100}%)`;
+      $$('#heroDots button').forEach((b,i)=> b.classList.toggle('active', i===index));
+      if(timer) clearTimeout(timer);
+      timer = setTimeout(()=>{ index = (index+1)%slides.length; updateHero(); }, 5000);
+    };
+    $('#heroPrev').addEventListener('click', ()=>{ index=(index-1+slides.length)%slides.length; updateHero(true);});
+    $('#heroNext').addEventListener('click', ()=>{ index=(index+1)%slides.length; updateHero(true);});
+    renderDots();
+
+    // ===== Render product rails =====
+    const makeProductCard = (p)=>{
+      const wished = store.wish.includes(p.id);
+      return `<article class="product" data-id="${p.id}">
+        <img src="${p.img}" alt="${p.title}">
+        <strong>${p.title}</strong>
+        <div class="row"><span class="price">${money(p.price)}</span>
+          <button class="wishlist" title="Add to wishlist">${wished?'❤️':'🤍'}</button>
+        </div>
+        <div class="row">
+          <button class="btn-light add" title="Add to Cart">Add to Cart</button>
+          <button class="btn-primary buy">Buy Now</button>
+        </div>
+      </article>`;
+    };
+
+    const deals = PRODUCTS.filter(p=>p.deal);
+    const electronics = PRODUCTS.filter(p=>p.cat==='electronics');
+    $('#rail-deals').innerHTML = deals.map(makeProductCard).join('');
+    $('#rail-electronics').innerHTML = electronics.map(makeProductCard).join('');
+
+    // ===== Cart logic =====
+    const openCart = ()=> $('#cartDrawer').classList.add('show');
+    const closeCart = ()=> $('#cartDrawer').classList.remove('show');
+    $('#openCart').addEventListener('click', openCart);
+    $('#closeCart').addEventListener('click', closeCart);
+    $('#closeCartBtn').addEventListener('click', closeCart);
+
+    const cartCount = $('#cartCount');
+    const cartItemsEl = $('#cartItems');
+    const cartSubtotalEl = $('#cartSubtotal');
+
+    function addToCart(id, qty=1){
+      const c = store.cart; const item = c.find(i=>i.id===id); if(item) item.qty+=qty; else c.push({id, qty}); store.cart=c; renderCart(); pulse(cartCount);
+    }
+    function removeFromCart(id){ const c=store.cart.filter(i=>i.id!==id); store.cart=c; renderCart(); }
+    function setQty(id, qty){ const c=store.cart; const it=c.find(i=>i.id===id); if(!it) return; it.qty=Math.max(1,qty); store.cart=c; renderCart(); }
+    function renderCart(){
+      const c = store.cart.map(it=> ({...it, p: PRODUCTS.find(p=>p.id===it.id)}));
+      cartCount.textContent = c.reduce((n,it)=>n+it.qty,0);
+      const subtotal = c.reduce((s,it)=>s+it.qty*it.p.price,0);
+      cartSubtotalEl.textContent = money(subtotal);
+      cartItemsEl.innerHTML = c.length? c.map(({p,qty})=>`
+        <div class="cart-item" data-id="${p.id}">
+          <img src="${p.img}" alt="${p.title}">
+          <div>
+            <div style="font-weight:700">${p.title}</div>
+            <div class="price">${money(p.price)}</div>
+            <div class="qty">
+              <button class="dec">-</button>
+              <span>${qty}</span>
+              <button class="inc">+</button>
+              <button class="btn-light rm" style="margin-left:8px">Remove</button>
+            </div>
+          </div>
+          <div>${money(p.price*qty)}</div>
+        </div>`).join('') : '<p>Your cart is empty.</p>';
+    }
+    function pulse(el){ el.animate([{transform:'scale(1)'},{transform:'scale(1.2)'},{transform:'scale(1)'}],{duration:300}); }
+    renderCart();
+
+    // Delegate clicks for product cards
+    document.body.addEventListener('click', (e)=>{
+      const product = e.target.closest('.product');
+      if(product){
+        const id = product.dataset.id;
+        if(e.target.classList.contains('add')){ addToCart(id,1); }
+        if(e.target.classList.contains('buy')){ addToCart(id,1); openCart(); }
+        if(e.target.classList.contains('wishlist')){
+          const w = new Set(store.wish);
+          if(w.has(id)) w.delete(id); else w.add(id);
+          store.wish = [...w];
+          // update icon
+          e.target.textContent = w.has(id) ? '❤️':'🤍';
+        }
+      }
+
+      const ci = e.target.closest('.cart-item');
+      if(ci){
+        const id = ci.dataset.id;
+        if(e.target.classList.contains('inc')){ const it=store.cart.find(i=>i.id===id); setQty(id,(it?.qty||1)+1); }
+        if(e.target.classList.contains('dec')){ const it=store.cart.find(i=>i.id===id); setQty(id,(it?.qty||1)-1); }
+        if(e.target.classList.contains('rm')){ removeFromCart(id); }
+      }
+    });
+
+    // Checkout demo
+    $('#checkoutBtn').addEventListener('click', ()=>{
+      if(!store.user){ alert('Please sign in to continue.'); openSignIn(); return; }
+      if(!store.addr){ alert('Please add a delivery PIN code.'); openAddress(); return; }
+      alert('Demo checkout complete! (No payment processed)');
+    });
+
+    // ===== Search + Suggestions =====
+    const searchInput = $('#searchInput');
+    const suggestions = $('#suggestions');
+    const searchIndex = PRODUCTS.map(p=>({id:p.id,t:p.title.toLowerCase()}));
+
+    function updateSuggestions(){
+      const q = searchInput.value.trim().toLowerCase();
+      if(!q){ suggestions.classList.remove('show'); suggestions.innerHTML=''; return; }
+      const matches = searchIndex.filter(x=>x.t.includes(q)).slice(0,8).map(x=>{
+        const p = PRODUCTS.find(p=>p.id===x.id);
+        return `<div data-id="${p.id}">🔎 ${p.title}</div>`;
+      });
+      suggestions.innerHTML = matches.join('');
+      suggestions.classList.toggle('show', matches.length>0);
+    }
+    searchInput.addEventListener('input', updateSuggestions);
+    suggestions.addEventListener('click', (e)=>{
+      const row = e.target.closest('div[data-id]'); if(!row) return;
+      const id = row.dataset.id; const p = PRODUCTS.find(p=>p.id===id);
+      searchInput.value = p.title; suggestions.classList.remove('show');
+    });
+    $('#searchBtn').addEventListener('click', ()=>{
+      const q = searchInput.value.trim().toLowerCase();
+      if(!q) return;
+      const hits = PRODUCTS.filter(p=>p.title.toLowerCase().includes(q));
+      if(!hits.length) { alert('No results in demo data.'); return; }
+      // Smooth scroll to first match and flash
+      const el = document.querySelector(`.product[data-id="${hits[0].id}"]`);
+      if(el){ el.scrollIntoView({behavior:'smooth', block:'center'}); el.animate([{boxShadow:'0 0 0 0px rgba(255,153,0,0.7)'},{boxShadow:'0 0 0 12px rgba(255,153,0,0)'},{boxShadow:'none'}],{duration:900}); }
+    });
+
+    // ===== Back to top =====
+    $('#backTop').addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
+
+    // ===== Wishlist quick open =====
+    $('#openWishlist').addEventListener('click', (e)=>{
+      e.preventDefault();
+      const wishedIds = new Set(store.wish);
+      if(!wishedIds.size){ alert('Your wishlist is empty.'); return; }
+      const first = PRODUCTS.find(p=>wishedIds.has(p.id));
+      document.querySelector(`.product[data-id="${first.id}"]`)?.scrollIntoView({behavior:'smooth', block:'center'});
+    });
+
+    // ===== Category filter (from select) =====
+    $('#catSelect').addEventListener('change', (e)=>{
+      const val = e.target.value;
+      const list = $$('.product');
+      list.forEach(el=>{
+        const id = el.dataset.id; const p = PRODUCTS.find(p=>p.id===id);
+        el.style.display = (val==='all'|| p.cat===val) ? '' : 'none';
+      });
+    });
+  </script>
+</body>
+</html>
