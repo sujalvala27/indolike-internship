@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Weatherly — Weather App (HTML/CSS/JS)</title>
+  <meta name="description" content="A complete frontend weather app built with only HTML, CSS and JavaScript. Supports city search, geolocation, 5-day forecast, unit toggle, favorites and offline demo data." />
+  <style>
+    :root{
+      --bg:#f3f6fb; --card:#ffffff; --muted:#6b7280; --accent:#0ea5a4; --glass:rgba(255,255,255,0.6);
+      --radius:12px; --shadow: 0 6px 20px rgba(12,20,30,0.08);
+      --maxw:980px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial; margin:0; background:linear-gradient(180deg,#e6f0fb 0%,var(--bg) 60%); display:flex;align-items:flex-start;justify-content:center;padding:28px;color:#0f172a}
+    a{color:inherit}
+
+    .app{width:100%;max-width:var(--maxw)}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    header h1{font-size:20px;margin:0}
+    header p{margin:0;color:var(--muted);font-size:13px}
+
+    .layout{display:grid;grid-template-columns:360px 1fr;gap:18px}
+
+    /* LEFT: Controls + favorites */
+    .panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+    .search{display:flex;gap:8px}
+    .search input{flex:1;padding:10px;border-radius:10px;border:1px solid #e6edf8}
+    .search button{padding:10px 12px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-weight:700}
+    .controls{display:flex;align-items:center;gap:8px;margin-top:10px}
+    .btn{padding:8px 10px;border-radius:10px;border:1px solid #e6edf8;background:transparent}
+    .btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+    .favorites{margin-top:12px}
+    .fav-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+    .fav-item{display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:10px;border:1px solid #f0f4fb;background:linear-gradient(180deg,rgba(255,255,255,0.6),rgba(250,251,255,0.8))}
+    .fav-item button{border:none;background:transparent;cursor:pointer}
+
+    /* RIGHT: Weather display */
+    .weather{display:flex;flex-direction:column;gap:12px}
+    .card{background:var(--card);padding:16px;border-radius:var(--radius);box-shadow:var(--shadow)}
+
+    .current{display:flex;gap:18px;align-items:center}
+    .current .icon{width:120px;height:120px;background:linear-gradient(180deg,#fff,#f7fafc);border-radius:14px;display:grid;place-items:center}
+    .current .meta{flex:1}
+    .temp{font-size:44px;font-weight:800}
+    .small{color:var(--muted)}
+
+    .details{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+    .stat{flex:1;min-width:120px;background:var(--glass);padding:10px;border-radius:10px;border:1px solid rgba(15,23,42,0.04)}
+
+    .forecast{display:flex;gap:10px;overflow:auto;padding-bottom:6px}
+    .day{min-width:110px;background:linear-gradient(180deg,#ffffff,#fbfdff);padding:10px;border-radius:10px;text-align:center;border:1px solid #eef6ff}
+
+    .log{margin-top:10px;color:var(--muted);font-size:13px}
+
+    /* loader */
+    .spinner{width:36px;height:36px;border-radius:50%;border:4px solid #e6eef7;border-top-color:var(--accent);animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* empty state */
+    .empty{display:grid;place-items:center;padding:30px;color:var(--muted)}
+
+    /* responsive */
+    @media (max-width:930px){
+      .layout{grid-template-columns:1fr;}
+      header{flex-direction:column;align-items:flex-start;gap:6px}
+      .current .icon{width:96px;height:96px}
+    }
+  </style>
+</head>
+<body>
+  <main class="app" role="main">
+    <header>
+      <div>
+        <h1>Weatherly</h1>
+        <p>Simple, fast weather app — built with plain HTML/CSS/JS.</p>
+      </div>
+      <div>
+        <small>Demo uses <strong>OpenWeatherMap</strong> — add your API key below or use demo mode.</small>
+      </div>
+    </header>
+
+    <section class="layout">
+      <!-- LEFT: Controls -->
+      <aside class="panel" aria-label="controls">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div style="font-weight:700">Search & Quick Actions</div>
+          <div style="font-size:13px;color:var(--muted)">v1.0</div>
+        </div>
+
+        <div class="search" style="margin-top:12px">
+          <input id="cityInput" placeholder="Search city (e.g. Mumbai, New York)" aria-label="City name" />
+          <button id="searchBtn">Search</button>
+        </div>
+
+        <div class="controls">
+          <button id="geoBtn" class="btn">Use My Location</button>
+          <button id="unitToggle" class="btn">°C</button>
+          <button id="demoBtn" class="btn">Demo Data</button>
+        </div>
+
+        <div style="margin-top:12px">
+          <label for="apiKey">OpenWeatherMap API Key</label>
+          <input id="apiKey" placeholder="Paste your API key (optional)" style="width:100%;padding:8px;border-radius:8px;border:1px solid #e6edf8;margin-top:6px" />
+          <small class="log">Get a free API key from https://openweathermap.org/api (needed for live data).</small>
+        </div>
+
+        <div class="favorites">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <strong>Favorites</strong>
+            <button id="clearFavs" class="btn" title="Clear favorites">Clear</button>
+          </div>
+          <div class="fav-list" id="favList">
+            <!-- favorite cities inserted here -->
+          </div>
+        </div>
+
+        <div class="log" id="status">Ready</div>
+      </aside>
+
+      <!-- RIGHT: Weather display -->
+      <section class="weather">
+        <div class="card current" id="currentCard">
+          <div class="icon" id="currIcon"> <img id="currIconImg" alt="weather icon" style="width:72px;height:72px"> </div>
+          <div class="meta">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div>
+                <div id="cityName" style="font-weight:800;font-size:18px">—</div>
+                <div class="small" id="localTime">—</div>
+              </div>
+              <div style="margin-left:auto;text-align:right">
+                <div class="temp" id="tempVal">—</div>
+                <div class="small" id="desc">—</div>
+              </div>
+            </div>
+
+            <div class="details" id="details">
+              <div class="stat">
+                <div class="small">Feels like</div>
+                <div id="feels">—</div>
+              </div>
+              <div class="stat">
+                <div class="small">Humidity</div>
+                <div id="hum">—</div>
+              </div>
+              <div class="stat">
+                <div class="small">Wind</div>
+                <div id="wind">—</div>
+              </div>
+              <div class="stat">
+                <div class="small">Pressure</div>
+                <div id="press">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <strong>5-Day Forecast</strong>
+          <div class="forecast" id="forecast"></div>
+        </div>
+
+        <div class="card">
+          <strong>Search Results</strong>
+          <div id="resultsArea">
+            <div class="empty" id="emptyState">
+              <div style="max-width:420px;text-align:center">
+                <p style="font-weight:700">No city selected</p>
+                <p class="small">Search for a city, use your location, or try the demo data.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </section>
+  </main>
+
+  <script>
+    // Weatherly — Single-file frontend weather app
+    // Features:
+    // - City search (OpenWeatherMap) OR demo data
+    // - Geolocation lookup
+    // - 5-day forecast aggregation
+    // - Unit toggle (C <-> F)
+    // - Favorites saved in localStorage
+    // - Graceful fallback to demo data when no API key
+
+    // ===== Utilities =====
+    const $ = (s, r=document) => r.querySelector(s);
+    const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+    const money = x => x; // placeholder (not used here)
+
+    // DOM
+    const cityInput = $('#cityInput');
+    const searchBtn = $('#searchBtn');
+    const geoBtn = $('#geoBtn');
+    const unitToggle = $('#unitToggle');
+    const demoBtn = $('#demoBtn');
+    const apiKeyInput = $('#apiKey');
+    const statusEl = $('#status');
+    const favList = $('#favList');
+
+    const cityNameEl = $('#cityName');
+    const localTimeEl = $('#localTime');
+    const tempValEl = $('#tempVal');
+    const descEl = $('#desc');
+    const currIconImg = $('#currIconImg');
+    const feelsEl = $('#feels');
+    const humEl = $('#hum');
+    const windEl = $('#wind');
+    const pressEl = $('#press');
+    const forecastEl = $('#forecast');
+    const emptyState = $('#emptyState');
+
+    // State
+    const state = {
+      unit: localStorage.getItem('wl_unit') || 'metric', // 'metric' or 'imperial'
+      apiKey: localStorage.getItem('wl_api') || '',
+      favorites: JSON.parse(localStorage.getItem('wl_favs')||'[]'),
+      demo: false
+    };
+
+    // Demo data (structure similar to OWM response)
+    const DEMO_CURRENT = {
+      name: 'San Francisco', dt: 1629964800, timezone: -25200,
+      main:{temp:18.5, feels_like:17.8, humidity:72, pressure:1013},
+      wind:{speed:4.2}, weather:[{description:'light rain',icon:'10d'}]
+    };
+    const DEMO_FORECAST = {
+      list: [
+        // 3-hourly; we'll aggregate by day in code
+        {dt:1629993600, main:{temp:18}, weather:[{icon:'10d'}]},
+        {dt:1630080000, main:{temp:20}, weather:[{icon:'01d'}]},
+        {dt:1630166400, main:{temp:21}, weather:[{icon:'01d'}]},
+        {dt:1630252800, main:{temp:19}, weather:[{icon:'04d'}]},
+        {dt:1630339200, main:{temp:17}, weather:[{icon:'10d'}]},
+      ]
+    };
+
+    // Init UI
+    function init(){
+      apiKeyInput.value = state.apiKey;
+      unitToggle.textContent = state.unit === 'metric' ? '°C' : '°F';
+      renderFavs();
+      attachEvents();
+      log('Ready');
+    }
+
+    function log(msg){ statusEl.textContent = msg; }
+
+    // ===== Favorites =====
+    function renderFavs(){
+      favList.innerHTML = state.favorites.length ? state.favorites.map(c=>`
+        <div class="fav-item" data-city="${c}">
+          <div style="font-weight:700">${c}</div>
+          <div>
+            <button class="btn use">Open</button>
+            <button class="btn rm">✕</button>
+          </div>
+        </div>
+      `).join('') : '<div class="small" style="color:var(--muted)">No favorites yet</div>';
+    }
+
+    function addFavorite(city){ if(!city) return; if(!state.favorites.includes(city)) state.favorites.unshift(city); state.favorites = state.favorites.slice(0,8); save(); renderFavs(); }
+    function removeFavorite(city){ state.favorites = state.favorites.filter(c=>c!==city); save(); renderFavs(); }
+    function save(){ localStorage.setItem('wl_favs', JSON.stringify(state.favorites)); localStorage.setItem('wl_unit', state.unit); localStorage.setItem('wl_api', state.apiKey||''); }
+
+    // ===== Event handlers =====
+    function attachEvents(){
+      searchBtn.addEventListener('click', ()=> searchCity(cityInput.value.trim()));
+      cityInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') searchCity(cityInput.value.trim()); });
+      geoBtn.addEventListener('click', useGeo);
+      unitToggle.addEventListener('click', toggleUnit);
+      demoBtn.addEventListener('click', ()=>{ state.demo = !state.demo; demoBtn.classList.toggle('active', state.demo); log(state.demo? 'Demo data ON' : 'Demo data OFF'); });
+      apiKeyInput.addEventListener('change', ()=>{ state.apiKey = apiKeyInput.value.trim(); save(); });
+      favList.addEventListener('click', (e)=>{
+        const item = e.target.closest('.fav-item'); if(!item) return;
+        const city = item.dataset.city;
+        if(e.target.classList.contains('use')){ searchCity(city); }
+        if(e.target.classList.contains('rm')){ removeFavorite(city); }
+      });
+      $('#clearFavs').addEventListener('click', ()=>{ if(confirm('Clear all favorites?')){ state.favorites=[]; save(); renderFavs(); } });
+
+      // delegated clicks in results area to add favorite
+      document.getElementById('resultsArea').addEventListener('click', (e)=>{
+        if(e.target.classList.contains('add-fav')){ const city = e.target.dataset.city; addFavorite(city); }
+      });
+    }
+
+    // ===== Core: fetching (or demo) =====
+    async function searchCity(query){ if(!query) return alert('Enter a city name');
+      log('Searching ' + query + '...');
+      emptyState.style.display = 'none';
+      try{
+        let current, forecast;
+        if(state.demo || !state.apiKey){
+          // demo fallback
+          log('Using demo data');
+          current = {...DEMO_CURRENT, name: query};
+          forecast = DEMO_FORECAST;
+        } else {
+          const api = 'https://api.openweathermap.org/data/2.5/';
+          const u = state.unit; // metric/imperial
+          const [cRes, fRes] = await Promise.all([
+            fetch(`${api}weather?q=${encodeURIComponent(query)}&units=${u}&appid=${state.apiKey}`),
+            fetch(`${api}forecast?q=${encodeURIComponent(query)}&units=${u}&appid=${state.apiKey}`)
+          ]);
+          if(!cRes.ok){ const err = await cRes.json().catch(()=>({message:'Request failed'})); throw new Error(err.message||'City not found'); }
+          if(!fRes.ok){ const err = await fRes.json().catch(()=>({message:'Request failed'})); throw new Error(err.message||'Forecast failed'); }
+          current = await cRes.json(); forecast = await fRes.json();
+        }
+        renderCurrent(current);
+        renderForecast(forecast);
+        showResults(query);
+        addFavorite(query); // quick-add to favorites
+        log('Updated');
+      } catch(err){ console.error(err); log('Error: '+err.message); alert('Error: '+err.message); }
+    }
+
+    async function useGeo(){ if(!navigator.geolocation) return alert('Geolocation not available');
+      log('Detecting location...');
+      navigator.geolocation.getCurrentPosition(async pos=>{
+        const {latitude, longitude} = pos.coords; log('Reverse geocoding...');
+        try{
+          if(state.demo || !state.apiKey){ // demo fallback
+            renderCurrent({...DEMO_CURRENT, name: 'Your Location'});
+            renderForecast(DEMO_FORECAST);
+            log('Demo data shown');
+            return;
+          }
+          const api = 'https://api.openweathermap.org/data/2.5/';
+          const u = state.unit;
+          // Use 'weather' and 'forecast' with lat/lon
+          const [cRes,fRes] = await Promise.all([
+            fetch(`${api}weather?lat=${latitude}&lon=${longitude}&units=${u}&appid=${state.apiKey}`),
+            fetch(`${api}forecast?lat=${latitude}&lon=${longitude}&units=${u}&appid=${state.apiKey}`)
+          ]);
+          const current = await cRes.json(); const forecast = await fRes.json();
+          renderCurrent(current); renderForecast(forecast); showResults(current.name);
+          addFavorite(current.name);
+          log('Location loaded');
+        } catch(err){ console.error(err); log('Geo error'); alert('Location error: '+err.message); }
+      }, err=>{ log('Geolocation denied'); alert('Unable to get location: '+err.message); });
+    }
+
+    // ===== Rendering helpers =====
+    function renderCurrent(data){
+      // data is either API response or demo structure
+      const name = data.name || '—';
+      const tz = data.timezone || 0; // seconds
+      cityNameEl.textContent = name;
+      localTimeEl.textContent = formatLocalTime(data.dt || (Date.now()/1000), tz);
+
+      const temp = data.main?.temp ?? data.temp;
+      const feels = data.main?.feels_like ?? data.feels_like;
+      const hum = data.main?.humidity ?? data.humidity;
+      const press = data.main?.pressure ?? data.pressure;
+      const wind = data.wind?.speed ?? data.wind_speed ?? 0;
+      const desc = data.weather?.[0]?.description ?? '—';
+      const icon = data.weather?.[0]?.icon ?? '01d';
+
+      tempValEl.textContent = temp !== undefined ? formatTemp(temp) : '—';
+      descEl.textContent = capitalize(desc);
+      currIconImg.src = `https://openweathermap.org/img/wn/${icon}@2x.png`;
+      currIconImg.alt = desc;
+      feelsEl.textContent = feels !== undefined ? formatTemp(feels) : '—';
+      humEl.textContent = hum !== undefined ? hum + '%' : '—';
+      pressEl.textContent = press !== undefined ? press + ' hPa' : '—';
+      windEl.textContent = wind !== undefined ? wind + (state.unit==='metric' ? ' m/s' : ' mph') : '—';
+    }
+
+    function renderForecast(data){
+      // OWM 3-hourly list -> aggregate into daily forecasts
+      if(!data || !data.list){ forecastEl.innerHTML = '<div class="small">No forecast data</div>'; return; }
+      const days = aggregateDaily(data.list);
+      forecastEl.innerHTML = days.map(d=>`
+        <div class="day">
+          <div style="font-weight:700">${d.day}</div>
+          <img src="https://openweathermap.org/img/wn/${d.icon}@2x.png" alt="icon" style="width:56px;height:56px;margin:6px auto">
+          <div style="font-weight:700">${formatTemp(d.temp)} </div>
+          <div class="small">${d.desc}</div>
+        </div>
+      `).join('');
+    }
+
+    function showResults(q){ document.getElementById('resultsArea').innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;justify-content:space-between">
+        <div><strong>${q}</strong> <div class="small">Results for ${q}</div></div>
+        <div><button class="btn add-fav" data-city="${q}">Add to favorites</button></div>
+      </div>
+      <div style="margin-top:12px" id="liveResults"></div>
+    `; }
+
+    // ===== Helpers: formatting =====
+    function formatLocalTime(unix, tzSeconds){
+      try{
+        const dt = new Date((unix + tzSeconds) * 1000);
+        return dt.toLocaleString(undefined,{weekday:'short',hour:'2-digit',minute:'2-digit'});
+      }catch(e){ return '—'; }
+    }
+    function formatTemp(v){ return state.unit==='metric' ? Math.round(v) + '°C' : Math.round(v) + '°F'; }
+    function capitalize(s){ return s ? s.split(' ').map(x=>x[0].toUpperCase()+x.slice(1)).join(' ') : s; }
+
+    // aggregate daily from 3-hourly list
+    function aggregateDaily(list){
+      const days = {};
+      list.forEach(item=>{
+        const d = new Date(item.dt * 1000);
+        const key = d.toISOString().slice(0,10);
+        if(!days[key]) days[key] = {temps:[], icons:{}, desc:[] , dt:item.dt};
+        days[key].temps.push(item.main.temp);
+        const ic = item.weather?.[0]?.icon; if(ic) days[key].icons[ic] = (days[key].icons[ic]||0)+1;
+        const desc = item.weather?.[0]?.description; if(desc) days[key].desc.push(desc);
+      });
+      // turn into array (skip today if less than 4 points?) but we'll show up to 5 days
+      const arr = Object.keys(days).map(k=>{
+        const d = days[k];
+        const avgTemp = d.temps.reduce((a,b)=>a+b,0)/d.temps.length;
+        const icon = Object.keys(d.icons).reduce((a,b)=> d.icons[a] > d.icons[b] ? a : b);
+        const desc = d.desc.sort((a,b)=>a.length-b.length)[0] || '';
+        const dt = new Date(d.dt*1000);
+        return {day: dt.toLocaleDateString(undefined,{weekday:'short'}), temp:avgTemp, icon:icon||'01d', desc:capitalize(desc)};
+      });
+      return arr.slice(0,5);
+    }
+
+    // ===== Unit toggle =====
+    function toggleUnit(){ state.unit = state.unit === 'metric' ? 'imperial' : 'metric'; unitToggle.textContent = state.unit === 'metric' ? '°C' : '°F'; save(); log('Unit: ' + unitToggle.textContent); }
+
+    // ===== Utility: simple startup demo =====
+    // show demo if no API key present
+    (function prefill(){
+      if(!state.apiKey){ apiKeyInput.placeholder = 'No API key: running demo mode'; demoBtn.classList.add('active'); state.demo = true; }
+    })();
+
+    // ===== Init =====
+    init();
+
+    // Expose a few helpers for debugging in console (optional)
+    window.WL = { state, searchCity, useGeo, addFavorite, removeFavorite };
+  </script>
+</body>
+</html>
